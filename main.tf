@@ -1,6 +1,7 @@
 provider "aws" {
-  region = "us-east-1"  # Set your desired AWS region
+  region = "ap-south-1"  # Set your desired AWS region
 }
+
 
 resource "aws_vpc" "example_vpc" {
   cidr_block = "10.0.0.0/16"  # Set your desired VPC CIDR block
@@ -25,6 +26,11 @@ resource "aws_security_group" "example_sg" {
 
 resource "aws_ecr_repository" "example_repo" {
   name = "example-repo"  # Set your desired ECR repository name
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
 }
 
 resource "aws_ecs_cluster" "example_cluster" {
@@ -35,14 +41,16 @@ resource "aws_ecs_task_definition" "example_task" {
   family                   = "example-task"  # Set your desired task family name
   requires_compatibilities = ["FARGATE"]
   
-  cpu = "256"  # Set your desired CPU units
-  memory = "512"  # Set your desired memory in MiB
+  cpu = "1Gib"  # Set your desired CPU units
+  memory = "1Gib"  # Set your desired memory in MiB
+  network_mode =  "awsvpc"
+  execution_role_arn = "arn:aws:iam::349898186074:role/Adminrole"
 
   container_definitions = <<DEFINITION
 [
   {
     "name": "example-container",
-    "image": "${aws_ecr_repository.example_repo.repository_url}:latest",
+    "image": "public.ecr.aws/s9e0w9o5/demojenkins:latest",
     "portMappings": [
       {
         "containerPort": 80,
@@ -60,6 +68,7 @@ resource "aws_ecs_service" "example_service" {
   cluster         = aws_ecs_cluster.example_cluster.id
   task_definition = aws_ecs_task_definition.example_task.arn
   desired_count   = 1
+  
 
   launch_type = "FARGATE"
 
