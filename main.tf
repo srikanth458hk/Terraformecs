@@ -3,26 +3,7 @@ provider "aws" {
 }
 
 
-resource "aws_vpc" "example_vpc" {
-  cidr_block = "10.0.0.0/16"  # Set your desired VPC CIDR block
-}
 
-resource "aws_subnet" "example_subnet" {
-  vpc_id     = aws_vpc.example_vpc.id
-  cidr_block = "10.0.1.0/24"  # Set your desired subnet CIDR block
-}
-
-resource "aws_security_group" "example_sg" {
-  vpc_id = aws_vpc.example_vpc.id
-
-  # Add any additional inbound/outbound rules as required
-  ingress {
-    from_port   = 0
-    to_port     = 65535
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
 
 resource "aws_ecr_repository" "example_repo" {
   name = "example-repo"  # Set your desired ECR repository name
@@ -41,20 +22,22 @@ resource "aws_ecs_task_definition" "example_task" {
   family                   = "example-task"  # Set your desired task family name
   requires_compatibilities = ["FARGATE"]
   
-  cpu = "1Gib"  # Set your desired CPU units
-  memory = "1Gib"  # Set your desired memory in MiB
+  cpu = 1024  # Set your desired CPU units
+  memory = 2048 # Set your desired memory in MiB
   network_mode =  "awsvpc"
-  execution_role_arn = "arn:aws:iam::349898186074:role/Adminrole"
+  #execution_role_arn = "arn:aws:iam::349898186074:role/Adminrole"
 
   container_definitions = <<DEFINITION
 [
   {
     "name": "example-container",
-    "image": "public.ecr.aws/s9e0w9o5/demojenkins:latest",
+    "image": "public.ecr.aws/j2d9m4m0/nodejs:latest",
     "portMappings": [
       {
         "containerPort": 80,
-        "protocol": "tcp"
+        "protocol": "tcp",
+         "cpu": 1024,
+         "memory": 2048
       }
     ],
     "essential": true
@@ -73,8 +56,8 @@ resource "aws_ecs_service" "example_service" {
   launch_type = "FARGATE"
 
   network_configuration {
-    security_groups = [aws_security_group.example_sg.id]
-    subnets         = [aws_subnet.example_subnet.id]
+    security_groups = ["sg-08e1e353cebe3ac37"]
+    subnets         = ["subnet-0d07c761a52ecc4ee"]
     assign_public_ip = true  # Set to false if you don't want a public IP
   }
 }
